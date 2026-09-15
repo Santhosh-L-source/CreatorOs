@@ -1,0 +1,85 @@
+PULL REQUEST CREATION INSTRUCTIONS
+=====================================
+
+The GitHub PR creation page should now be open in your browser.
+If not, go to: https://github.com/Santhosh-L-source/CreatorOs/pull/new/fix/gantt-dynamic-positioning
+
+STEP 1 - TITLE:
+===============
+Copy and paste this title:
+Fix: Dynamic Gantt bar positioning based on actual task dates (#1159)
+
+STEP 2 - DESCRIPTION:
+====================
+Copy and paste this entire description:
+
+## Summary
+Fixes #1159 - Gantt bars now dynamically position and size based on actual task dates instead of hardcoded values.
+
+## Problem
+The Task Manager's Timeline/Gantt view was not visually representing the actual duration of tasks. Each task bar was rendered with hardcoded inline styles (`left: 10%; width: 40%;`) instead of values calculated from each task's Start Date and Due Date.
+
+## Solution
+Modified `public/js/task-manager.js` (lines 387-463) to implement dynamic positioning and sizing:
+
+### Key Changes:
+1. **Dynamic Position Calculation**:
+   ```javascript
+   leftPercent = ((taskStartDate - timelineStart) / totalDuration) * 100
+   ```
+
+2. **Dynamic Width Calculation**:
+   ```javascript
+   widthPercent = ((taskDueDate - taskStartDate) / totalDuration) * 100
+   ```
+
+3. **Timeline Range Detection**:
+   - Automatically finds earliest start date and latest due date
+   - Adds 5% padding on each side for better visualization
+
+4. **Edge Case Handling**:
+   - Tasks without dates use `createdAt` as start and +3 days as default duration
+   - Tasks with `dueDate < startDate` get auto-corrected to 1-day minimum
+   - Single-day tasks guaranteed 2% minimum width for visibility
+   - All values clamped to 0-100% range
+
+5. **Enhanced UX**:
+   - Added timeline scale header showing date range (start, middle, end)
+   - Improved tooltips showing "Start: Date | Due: Date" on hover
+   - Maintained all existing styles and interactions
+
+## Testing Instructions
+1. Create Task A: Start Date = Sep 15, Due Date = Sep 16 (1-day task)
+2. Create Task B: Start Date = Sep 15, Due Date = Oct 15 (30-day task)
+3. Create Task C: Start Date = Sep 20, Due Date = Sep 25 (different start position)
+4. Open Timeline/Gantt view
+5. Verify:
+   - Task B bar is ~30x wider than Task A
+   - Task C appears further right on timeline
+   - Timeline scale shows correct date range
+   - Tooltips display correct dates on hover
+
+## Results
+- ✅ Tasks now display with proportional widths based on actual duration
+- ✅ Tasks position correctly based on start dates
+- ✅ Timeline provides accurate visual project overview
+- ✅ Edge cases handled gracefully
+- ✅ Backward compatible - no breaking changes
+
+## Type of Change
+- [x] Bug fix (non-breaking change which fixes an issue)
+
+## Checklist
+- [x] My code follows the style guidelines of this project
+- [x] I have performed a self-review of my code
+- [x] I have tested my changes locally
+- [x] The fix addresses all issues mentioned in #1159
+
+## Files Changed
+- `public/js/task-manager.js` - Updated `renderGanttView()` function (lines 387-463)
+
+STEP 3:
+=======
+Click the green "Create pull request" button
+
+That's it! The PR will be created and linked to issue #1159.
