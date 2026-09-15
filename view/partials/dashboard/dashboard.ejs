@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | CreatorOS</title>
+  <!-- Google Fonts: common fonts via shared partial -->
+  <%- include('../_fonts') %>
+  <%- include('./partials/dashboard/_styles') %>
+</head>
+
+<body>
+  <div class="dashboard-layout" id="dashboardLayout">
+
+    <%- include('./partials/dashboard/_sidebar', { services }) %>
+
+    <main class="main" id="main-content" tabindex="-1">
+
+      <%- include('./partials/dashboard/_topbar', { user }) %>
+
+      <section class="content">
+
+        <!-- Page heading + primary CTA -->
+        <div class="dashboard-head">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Welcome back, <%= user.name %>.</p>
+          </div>
+          <a class="primary-action" href="/services/url-shortener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path d="M12 5v14"></path>
+              <path d="M5 12h14"></path>
+            </svg>
+            Create New Link
+          </a>
+        </div>
+
+        <%- include('./partials/dashboard/_stats', { user }) %>
+
+        <%- include('./partials/dashboard/_invite_status', { inviteSummary }) %>
+
+        <%- include('./partials/dashboard/_analytics', { inviteAcceptMessage, inviteAcceptError }) %>
+
+        <%- include('./partials/dashboard/_recent_links') %>
+
+      </section>
+    </main>
+  </div>
+
+  <%- include('./partials/dashboard/_scripts') %>
+  <button type="button" id="scrollToTopBtn" aria-label="Scroll to top" title="Go to top">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+</button>
+</body>
+</html>

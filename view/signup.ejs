@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- SEO meta tags -->
+    <%- include('./partials/_seo', {
+        title: 'Sign Up',
+        description: 'Create your CreatorOS account and start managing your creator business from one dashboard.',
+        canonical: 'https://creatoros.com/signup'
+    }) %>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('./partials/_brand_head') %>
+    
+    <!-- Google Fonts: common fonts via shared partial -->
+    <%- include('./partials/_fonts') %>
+    <!-- Page-specific font: Fraunces -->
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #F4EAD5;
+            --white: #FFFFFF;
+            --black: #0F172A;
+            --teal: #2DD4BF;
+            --yellow: #FBBF24;
+            --gray: #64748B;
+            
+            --border-width: 3px;
+            --shadow-solid: 4px 4px 0px 0px var(--black);
+            --shadow-hover: 6px 6px 0px 0px var(--black);
+            --shadow-active: 2px 2px 0px 0px var(--black);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--black);
+            background-color: var(--cream);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Container */
+        .split-layout {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        @media (min-width: 1024px) {
+            .split-layout {
+                flex-direction: row;
+            }
+        }
+
+        /* Left Side */
+        .left-panel {
+            flex: 1;
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-bottom: var(--border-width) solid var(--black);
+            background-image: radial-gradient(#d1c7b5 1px, transparent 1px);
+            background-size: 24px 24px;
+            background-color: var(--cream);
+            background-position: 0 0;
+        }
+        
+        @media (min-width: 1024px) {
+            .left-panel {
+                padding: 5rem 4rem;
+                border-bottom: none;
+                border-right: var(--border-width) solid var(--black);
+            }
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
+            font-weight: 700;
+            font-size: 1.25rem;
+            text-decoration: none;
+            color: var(--black);
+            margin-bottom: 4rem;
+        }
+
+        .brand-badge-logo {
+            display: block;
+            height: 44px;
+            width: auto;
+        }
+
+        .left-panel h1 {
+            font-family: 'Fraunces', serif;
+            font-size: clamp(3rem, 6vw, 4.5rem);
+            line-height: 1.1;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            letter-spacing: -1px;
+        }
+
+        .highlight-text {
+            color: var(--teal);
+            text-shadow: 2px 2px 0px var(--black);
+            -webkit-text-stroke: 1px var(--black);
+        }
+
+        .left-panel .description {
+            font-size: 1.125rem;
+            line-height: 1.6;
+            color: #334155;
+            max-width: 85%;
+            margin-bottom: 3rem;
+            font-weight: 500;
+        }
+
+        .feature-card {
+            background: var(--white);
+            border: var(--border-width) solid var(--black);
+            padding: 2rem;
+            box-shadow: var(--shadow-solid);
+            position: relative;
+            transform: rotate(-1.5deg);
+            max-width: 400px;
+            margin-bottom: 3rem;
+            transition: transform 0.2s;
+        }
+        
+        .feature-card:hover {
+            transform: rotate(0deg) translate(-2px, -2px);
+        }
+
+        .pro-badge {
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            background: var(--yellow);
+            border: 2px solid var(--black);
+            padding: 0.25rem 0.75rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 2px 2px 0px 0px var(--black);
+        }
+
+        .feature-card h3 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }
+
+        .feature-list svg {
+            width: 20px;
+            height: 20px;
+            color: var(--teal);
+            flex-shrink: 0;
+        }
+
+        .trusted-banner {
+            border: var(--border-width) solid var(--black);
+            padding: 0.75rem 1rem;
+            display: inline-block;
+            font-weight: 700;
+            font-size: 0.875rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: var(--white);
+            box-shadow: 2px 2px 0px 0px var(--black);
+        }
+
+        /* Right Side */
+        .right-panel {
+            flex: 1.2;
+            background-color: var(--white);
+            padding: 3rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 1024px) {
+            .right-panel {
+                padding: 4rem;
+            }
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 10px;
+            border: 2px solid var(--black);
+            background: #e2e8f0;
+            position: relative;
+        }
+
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 33%;
+            background: var(--teal);
+            border-right: 2px solid var(--black);
+        }
+
+        .step-text {
+            font-family: 'Space Grotesk', monospace;
+            font-weight: 700;
+            font-size: 0.875rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .form-container h2 {
+            font-family: 'Fraunces', serif;
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+
+        .form-container p {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 1rem;
+            background: var(--white);
+            border: 2px solid var(--black);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--black);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            gap: 12px;
+            box-shadow: 4px 4px 0 var(--black);
+            margin-bottom: 1rem;
+        }
+        
+        .social-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--black);
+        }
+        
+        .social-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .social-icon { width: 18px; height: 18px; }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 2rem 0;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            color: var(--black);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.75rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--black);
+        }
+
+        .divider:not(:empty)::before { margin-right: 1rem; }
+        .divider:not(:empty)::after { margin-left: 1rem; }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.875rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+            color: var(--black);
+        }
+
+        input {
+            width: 100%;
+            border: var(--border-width) solid var(--black);
+            padding: 1.25rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s;
+            box-shadow: 2px 2px 0px 0px transparent;
+            background: var(--white);
+        }
+
+        input:focus {
+            box-shadow: var(--shadow-solid);
+            transform: translate(-2px, -2px);
+        }
+        
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        button {
+            width: 100%;
+            border: var(--border-width) solid var(--black);
+            padding: 1.25rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.125rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: var(--shadow-solid);
+            transition: all 0.15s ease;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button.primary {
+            background-color: var(--teal);
+            color: var(--black);
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        button:active {
+            transform: translate(2px, 2px);
+            box-shadow: var(--shadow-active);
+        }
+
+        .auth-error {
+            background-color: #fef2f2;
+            border: 2px solid #ef4444;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: #b91c1c;
+            font-weight: 600;
+            box-shadow: 4px 4px 0px 0px #ef4444;
+        }
+
+        .auth-success {
+            background-color: #f0fdf4;
+            border: 2px solid #22c55e;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #166534;
+            font-weight: 600;
+            box-shadow: 4px 4px 0px 0px #22c55e;
+        }
+
+        .auth-success h3 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #166534;
+        }
+
+        .auth-success p {
+            margin: 0.5rem 0;
+            line-height: 1.6;
+        }
+
+        .success-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .success-actions a {
+            display: inline-block;
+            padding: 1rem;
+            text-align: center;
+            background-color: var(--teal);
+            color: var(--black);
+            text-decoration: none;
+            font-weight: 700;
+            border: var(--border-width) solid var(--black);
+            box-shadow: var(--shadow-solid);
+            transition: all 0.15s ease;
+        }
+
+        .success-actions a:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .success-actions a:active {
+            transform: translate(2px, 2px);
+            box-shadow: var(--shadow-active);
+        }
+
+        .switch-link {
+            text-align: center;
+            margin-top: 2rem;
+            font-weight: 500;
+        }
+
+        .switch-link a {
+            color: var(--black);
+            font-weight: 700;
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 4px;
+        }
+
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .password-wrapper input {
+            padding-right: 3.25rem !important;
+        }
+
+        button.password-toggle-btn {
+            position: absolute !important;
+            right: 12px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            cursor: pointer !important;
+            color: var(--black) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 4px !important;
+            margin: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            min-height: auto !important;
+            z-index: 10 !important;
+            transition: transform 0.15s ease !important;
+        }
+
+        button.password-toggle-btn:hover {
+            transform: translateY(-50%) scale(1.15) !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        button.password-toggle-btn:active {
+            transform: translateY(-50%) scale(0.9) !important;
+            box-shadow: none !important;
+        }
+
+        button.password-toggle-btn:focus {
+            outline: 2px solid var(--teal) !important;
+            border-radius: 4px;
+        }
+
+        .switch-link a:hover {
+            color: var(--teal);
+        }
+    </style>
+</head>
+<body>
+    <main class="split-layout">
+        <!-- Left Panel -->
+        <section class="left-panel">
+            <a href="/" class="brand-badge">
+                <img class="brand-badge-logo" src="<%= BRAND.logo %>" alt="CreatorOS Logo">
+            </a>
+
+            <h1>Start your <br><span class="highlight-text">empire</span> today.</h1>
+            
+            <p class="description">
+                The all-in-one workspace built for modern creators. Scale your audience, manage links, and track growth with tactile precision.
+            </p>
+
+            <div class="feature-card">
+                <div class="pro-badge">Pro Benefit</div>
+                <h3>Why go Pro?</h3>
+                <ul class="feature-list">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 6L9 17l-5-5"></path>
+                        </svg>
+                        Unlimited Smart Links
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 6L9 17l-5-5"></path>
+                        </svg>
+                        Advanced CRM & Leads
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 6L9 17l-5-5"></path>
+                        </svg>
+                        Custom .creator Domains
+                    </li>
+                </ul>
+            </div>
+
+            <div class="trusted-banner">
+                Trusted by 10,000+ Creators Worldwide
+            </div>
+        </section>
+
+        <!-- Right Panel -->
+        <section class="right-panel">
+            <div class="form-container">
+                <div class="step-indicator">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="step-text">Step 01/03</span>
+                </div>
+
+                <h2>Identity</h2>
+                <p>Tell us who is behind the masterpiece.</p>
+
+                <% if (typeof success !== 'undefined' && success) { %>
+                    <div class="auth-success" role="alert">
+                        <h3>✓ Account Created!</h3>
+                        <p><%= success %></p>
+                        <% if (typeof verificationDeliveryUnavailable !== 'undefined' && verificationDeliveryUnavailable) { %>
+                            <p>Email delivery is temporarily unavailable, so verification cannot be sent yet.</p>
+                        <% } %>
+                        <div class="success-actions">
+                            <% if (typeof verificationDeliveryUnavailable === 'undefined' || !verificationDeliveryUnavailable) { %>
+                                <a href="/resend-verification?email=<%= encodeURIComponent(typeof verificationEmail !== 'undefined' ? verificationEmail : '') %>">Resend Verification Email</a>
+                            <% } %>
+                            <a href="/login">Back to Login</a>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <% if (typeof error !== 'undefined' && error) { %>
+                        <div class="auth-error" role="alert">
+                            <%= error %>
+                        </div>
+                    <% } %>
+
+                    <a class="social-btn" href="/auth/google">
+                        <svg class="social-icon" viewBox="0 0 48 48" aria-hidden="true">
+                            <path fill="#EA4335" d="M24 9.5c3.5 0 6.5 1.2 8.9 3.5l6.6-6.6C35.5 2.7 30.3.5 24 .5 14.8.5 6.9 5.8 3.1 13.5l7.7 6C12.6 13.6 17.8 9.5 24 9.5z"/>
+                            <path fill="#4285F4" d="M46.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 2.9-2.2 5.4-4.8 7.1l7.4 5.7c4.3-4 7.3-9.9 7.3-16.8z"/>
+                            <path fill="#FBBC05" d="M10.8 28.5c-.5-1.4-.8-2.9-.8-4.5s.3-3.1.8-4.5l-7.7-6C1.5 16.7.6 20.2.6 24s.9 7.3 2.5 10.5l7.7-6z"/>
+                            <path fill="#34A853" d="M24 47.5c6.3 0 11.6-2.1 15.4-5.7L32 36.1c-2.1 1.4-4.7 2.2-8 2.2-6.2 0-11.4-4.1-13.2-9.8l-7.7 6C6.9 42.2 14.8 47.5 24 47.5z"/>
+                        </svg>
+                        Sign in with Google
+                    </a>
+
+                    <div class="divider">OR EMAIL</div>
+
+                    <form action="/signup" method="POST">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="form-group">
+                            <label for="signup-name">Full Name</label>
+                            <input id="signup-name" type="text" name="name" placeholder="e.g. Alex Rivera" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="signup-email">Email Address</label>
+                            <input id="signup-email" type="email" name="email" placeholder="e.g. alex@creator.os" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signup-password">Password</label>
+                            <div class="password-wrapper">
+                                <input id="signup-password" type="password" name="password" placeholder="••••••••" required minlength="8">
+                                <button type="button" id="toggle-signup-password" class="password-toggle-btn" aria-label="Show password">
+                                    <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="primary" data-loading-text="Creating Account...">
+                            Create Account
+                        </button>
+
+<script nonce="<%= nonce %>">
+    const signupForm = document.querySelector('form');
+    let signupLoading = false;
+
+    signupForm?.addEventListener('submit', function () {
+        if (signupLoading) return false;
+
+        signupLoading = true;
+
+        const submitButton = this.querySelector('button[type="submit"]');
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.setAttribute('aria-busy', 'true');
+
+            submitButton.dataset.originalText = submitButton.innerHTML;
+
+            submitButton.innerHTML = `
+                <span style="display:flex;align-items:center;gap:8px;">
+                    <span class="spinner"></span>
+                    ${submitButton.dataset.loadingText}
+                </span>
+            `;
+        }
+    });
+
+    const toggleSignupPasswordBtn = document.querySelector('#toggle-signup-password');
+    const signupPasswordInput = document.querySelector('#signup-password');
+
+    toggleSignupPasswordBtn?.addEventListener('click', function () {
+        const isPassword = signupPasswordInput.getAttribute('type') === 'password';
+        signupPasswordInput.setAttribute('type', isPassword ? 'text' : 'password');
+
+        if (isPassword) {
+            this.innerHTML = `
+                <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+            `;
+            this.setAttribute('aria-label', 'Hide password');
+        } else {
+            this.innerHTML = `
+                <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            `;
+            this.setAttribute('aria-label', 'Show password');
+        }
+    });
+</script>
+
+<style>
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #000;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+</style>
+
+                    </form>
+
+                    <p class="switch-link">
+                        Already have an account? <a href="/login">Login</a>
+                    </p>
+                <% } %>
+            </div>
+        </section>
+    </main>
+<%- include('./partials/layout/back-to-top') %>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- SEO meta tags -->
+    <%- include('./partials/_seo', {
+        title: 'Profile',
+        description: 'Creator profile on CreatorOS.',
+        canonical: 'https://creatoros.com/profile'
+    }) %>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('./partials/_brand_head') %>
+    <!-- Google Fonts: loaded once from shared partial -->
+    <%- include('./partials/_fonts') %>
+    <style>
+        :root {
+            --bg: #f5f1ea;
+            --bg-2: #efe8dc;
+            --card-bg: #ffffff;
+            --text: #111111;
+            --muted: #4b5563;
+            --muted-2: #6b7280;
+            --border: #111111;
+            --accent-teal: #37d6c8;
+            --accent-blue: #76a9fa;
+            --accent-yellow: #e4c13b;
+            --success: #2bb673;
+            --shadow-retro: 3px 3px 0px var(--border);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.04)),
+                var(--bg);
+        }
+
+        .page-shell {
+            width: min(980px, calc(100% - 2rem));
+            margin: 0 auto;
+            padding: 2rem 0 2.5rem;
+        }
+
+        .profile-card {
+            background: var(--card-bg);
+            border: var(--border-thick, 2px solid var(--border));
+            box-shadow: var(--shadow-retro);
+            padding: 1.5rem;
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-logo {
+            display: block;
+            height: 42px;
+            width: auto;
+            flex: 0 0 auto;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2rem, 5vw, 3rem);
+            line-height: 1;
+        }
+
+        .brand-copy {
+            display: grid;
+            gap: 0.15rem;
+        }
+
+        .brand-copy p {
+            margin: 0;
+            color: var(--muted-2);
+            font-size: 0.92rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border: 2px solid var(--border);
+            background: var(--accent-yellow);
+            box-shadow: var(--shadow-retro);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .profile-main,
+        .profile-side {
+            border: 2px solid var(--border);
+            background: #fff;
+            box-shadow: var(--shadow-retro);
+            height: 100%;
+        }
+
+        .profile-main {
+            padding: 1.25rem;
+        }
+
+        .profile-side {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar {
+            width: 4.2rem;
+            height: 4.2rem;
+            display: grid;
+            place-items: center;
+            border: 2px solid var(--border);
+            background: var(--accent-blue);
+            box-shadow: var(--shadow-retro);
+            color: #111;
+            flex: 0 0 auto;
+        }
+
+        .avatar svg {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .identity-block {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .profile-kicker {
+            margin: 0 0 0.35rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted-2);
+        }
+
+        .handle {
+            margin: 0.35rem 0 0;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .bio {
+            margin: 0.9rem 0 0;
+            color: var(--muted);
+            line-height: 1.65;
+            max-width: 52ch;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 0.8rem 1rem;
+            text-decoration: none;
+            font-weight: 700;
+            border: 2px solid var(--border);
+            box-shadow: var(--shadow-retro-btn, 2px 2px 0px var(--border));
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .btn svg {
+            width: 0.95rem;
+            height: 0.95rem;
+        }
+
+        .btn-primary {
+            color: #111;
+            background: var(--accent-teal);
+        }
+
+        .btn-secondary {
+            color: var(--text);
+            background: var(--card-bg);
+        }
+
+        .btn:hover {
+            transform: translate(-1px, -1px);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .info-box {
+            padding: 0.9rem;
+            border: 2px solid var(--border);
+            background: var(--bg);
+            box-shadow: var(--shadow-retro-btn);
+        }
+
+        .info-label {
+            display: block;
+            margin-bottom: 0.3rem;
+            color: var(--muted-2);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            display: block;
+            color: var(--text);
+            font-size: 0.96rem;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .section-title {
+            margin: 0 0 0.9rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 2px solid var(--border);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .list {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .list-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.85rem 0.95rem;
+            border: 2px solid var(--border);
+            background: #fff;
+            box-shadow: var(--shadow-retro-btn);
+        }
+
+        .list-row strong {
+            color: var(--muted-2);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .list-row span {
+            text-align: right;
+            color: var(--text);
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .summary-card {
+            display: grid;
+            gap: 0.75rem;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            box-shadow: var(--shadow-retro-btn);
+        }
+
+        .summary-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: baseline;
+        }
+
+        .summary-head h2,
+        .panel h2 {
+            margin: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+        }
+
+        .summary-head p,
+        .panel p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .bar {
+            height: 0.9rem;
+            margin-top: 0.25rem;
+            border: 2px solid var(--border);
+            background: #fff;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            width: 72%;
+            height: 100%;
+            border-radius: inherit;
+            background: var(--accent-blue);
+        }
+
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+        }
+
+        .tag {
+            padding: 0.45rem 0.75rem;
+            border: 2px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 0.84rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-retro-btn);
+        }
+
+        .tag.good {
+            background: var(--accent-teal);
+        }
+
+        .tag.warn {
+            background: var(--accent-yellow);
+        }
+
+        .tag.neutral {
+            background: var(--card-bg);
+        }
+
+        .actions {
+            display: grid;
+            gap: 0.7rem;
+        }
+
+        .action-link {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.95rem 1rem;
+            border: 2px solid var(--border);
+            color: var(--text);
+            text-decoration: none;
+            background: #fff;
+            box-shadow: var(--shadow-retro-btn);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .action-link strong {
+            display: block;
+            margin-bottom: 0.15rem;
+        }
+
+        .action-link span {
+            color: var(--muted);
+            font-size: 0.92rem;
+            line-height: 1.4;
+        }
+
+        .action-link:hover {
+            transform: translate(-1px, -1px);
+        }
+
+        .action-link svg {
+            width: 1rem;
+            height: 1rem;
+            flex: 0 0 auto;
+            color: var(--text);
+        }
+
+        .footer-note {
+            margin: 0.25rem 0 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 900px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page-shell {
+                width: min(980px, calc(100% - 1rem));
+            }
+
+            .identity-block {
+                flex-direction: column;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .list-row,
+            .action-link {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .list-row span {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell">
+        <main class="profile-card">
+            <header class="page-header">
+                <div class="brand-block">
+                    <img class="brand-logo" src="<%= BRAND.logo %>" alt="CreatorOS Logo">
+                    <div class="brand-copy">
+                        <h1>Profile</h1>
+                    </div>
+                </div>
+            </header>
+
+            <% const rawHandle = user.alias ? String(user.alias).replace(/^@+/, '') : ''; %>
+            <% const displayHandle = rawHandle ? '@' + rawHandle : '@creator'; %>
+            <% const bioText = user.bio && user.bio.trim() ? user.bio : 'Your profile details live here in a clean, lightweight summary.'; %>
+
+            <section class="hero">
+                <div class="profile-main">
+                    <div class="identity-block">
+                        <div class="avatar" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21a8 8 0 0 0-16 0"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+
+                        <div>
+                            <p class="profile-kicker">Workspace identity</p>
+                            <h1><%= user.name %></h1>
+                            <p class="handle"><%= displayHandle %></p>
+                            <p class="bio"><%= bioText %></p>
+
+                            <div class="hero-actions">
+                                <a class="btn btn-primary" href="/settings">Edit profile</a>
+                                <a class="btn btn-secondary" href="/dashboard">Back to dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="profile-side">
+                    <div class="info-grid">
+                        <div class="info-box">
+                            <span class="info-label">Email</span>
+                            <span class="info-value"><%= user.email || 'Not connected' %></span>
+                        </div>
+                        <div class="info-box">
+                            <span class="info-label">User ID</span>
+                            <span class="info-value"><%= user.id || 'Authenticated session' %></span>
+                        </div>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="panel summary-card">
+                <div class="summary-head">
+                    <h2>Quick actions</h2>
+                </div>
+                <div class="actions">
+                    <a class="action-link" href="/settings">
+                        <div>
+                            <strong>Open settings</strong>
+                            <span>Update profile, security, and preferences.</span>
+                        </div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="m9 18 6-6-6-6"></path>
+                        </svg>
+                    </a>
+                    <a class="action-link" href="/logout">
+                        <div>
+                            <strong>Logout</strong>
+                            <span>End the current CreatorOS session.</span>
+                        </div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="m9 18 6-6-6-6"></path>
+                        </svg>
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+<%- include('./partials/layout/back-to-top') %>
+</body>
+</html>

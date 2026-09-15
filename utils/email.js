@@ -1,0 +1,317 @@
+const nodemailer = require('nodemailer');
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getEmailConfig() {
+  const {
+    EMAIL_SERVICE,
+    EMAIL_HOST,
+    EMAIL_PORT,
+    EMAIL_SECURE,
+    EMAIL_USER,
+    EMAIL_PASSWORD,
+    EMAIL_FROM_NAME,
+    EMAIL_FROM,
+    EMAIL_REPLY_TO,
+  } = process.env;
+
+  return {
+    EMAIL_SERVICE,
+    EMAIL_HOST,
+    EMAIL_PORT,
+    EMAIL_SECURE,
+    EMAIL_USER,
+    EMAIL_PASSWORD,
+    EMAIL_FROM_NAME,
+    EMAIL_FROM,
+    EMAIL_REPLY_TO,
+  };
+}
+
+/**
+ * @function createTransporter
+ * @description Creates a nodemailer transporter object for sending emails.
+ * @returns {any}
+ */
+function createTransporter() {
+  const {
+    EMAIL_SERVICE,
+    EMAIL_HOST,
+    EMAIL_PORT,
+    EMAIL_SECURE,
+    EMAIL_USER,
+    EMAIL_PASSWORD,
+  } = getEmailConfig();
+
+  if (!EMAIL_USER || !EMAIL_PASSWORD) {
+    throw new Error('Email transport is not configured. Set EMAIL_USER and EMAIL_PASSWORD.');
+  }
+
+  const transporterOptions = {
+    auth: {
+      user: EMAIL_USER,
+      pass: EMAIL_PASSWORD,
+    },
+  };
+
+  if (EMAIL_SERVICE && !EMAIL_HOST) {
+    transporterOptions.service = EMAIL_SERVICE;
+  }
+
+  if (EMAIL_HOST) {
+    transporterOptions.host = EMAIL_HOST;
+  }
+
+  if (EMAIL_PORT) {
+    transporterOptions.port = Number(EMAIL_PORT);
+  }
+
+  if (EMAIL_SECURE) {
+    transporterOptions.secure = EMAIL_SECURE === 'true';
+  } else if (EMAIL_PORT) {
+    transporterOptions.secure = Number(EMAIL_PORT) === 465;
+  }
+
+  return nodemailer.createTransport(transporterOptions);
+}
+
+/**
+ * @function isEmailTransportConfigured
+ * @description Checks whether the deployment has enough mail settings to attempt delivery.
+ * @returns {boolean}
+ */
+function isEmailTransportConfigured() {
+  const currentEmailUser = process.env.EMAIL_USER;
+  const currentEmailPassword = process.env.EMAIL_PASSWORD;
+  const currentEmailService = process.env.EMAIL_SERVICE;
+  const currentEmailHost = process.env.EMAIL_HOST;
+
+  return Boolean(
+    currentEmailUser &&
+    currentEmailPassword &&
+    (currentEmailService || currentEmailHost)
+  );
+}
+
+/**
+ * @function sendInvitationEmail
+ * @description Sends a collaboration invitation email to a specified recipient.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @returns {Promise<void>|void}
+ */
+async function sendInvitationEmail({ to, inviterName, projectName, inviteUrl, personalMessage }) {
+  const transporter = createTransporter();
+  const { EMAIL_USER, EMAIL_FROM_NAME, EMAIL_FROM, EMAIL_REPLY_TO } = getEmailConfig();
+  const from = EMAIL_FROM || EMAIL_USER;
+  const fromName = EMAIL_FROM_NAME || 'CreatorOS';
+  const replyTo = EMAIL_REPLY_TO || from;
+  const escapedInviterName = escapeHtml(inviterName);
+  const escapedProjectName = escapeHtml(projectName);
+  const escapedPersonalMessage = escapeHtml(personalMessage);
+  const subject = `${escapedInviterName} invited you to collaborate on ${escapedProjectName}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.5;">
+      <h2 style="color: #0f172a;">You’ve been invited to collaborate</h2>
+      <p><strong>${escapedInviterName}</strong> has invited you to collaborate on <strong>${escapedProjectName}</strong>.</p>
+      ${personalMessage ? `<p><em>Message:</em> ${escapedPersonalMessage}</p>` : ''}
+      <p>Click the button below to accept the invitation and join the project.</p>
+      <p style="text-align:center; margin: 32px 0;">
+        <a href="${inviteUrl}" style="display:inline-block; padding:14px 24px; background:#22d3ee; color:#0f172a; text-decoration:none; border-radius:999px; font-weight:700;">Accept Invitation</a>
+      </p>
+      <p>If the button does not work, paste this URL into your browser:</p>
+      <p><a href="${inviteUrl}" style="color:#2563eb;">${inviteUrl}</a></p>
+      <p>Thanks,<br />CreatorOS Team</p>
+    </div>
+  `;
+
+  const text = `${escapedInviterName} invited you to collaborate on ${escapedProjectName}.
+
+Accept here: ${inviteUrl}
+
+${personalMessage ? `Message:
+${escapedPersonalMessage}
+
+` : ''}
+If the link does not work, paste it into your browser.`;
+
+  return transporter.sendMail({
+    from: `"${fromName}" <${from}>`,
+    to,
+    replyTo,
+    subject,
+    text,
+    html,
+  });
+}
+
+/**
+ * @function sendVerificationEmail
+ * @description Sends an email containing a verification link for new user registration.
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @returns {Promise<void>|void}
+ */
+async function sendVerificationEmail({ to, verificationLink, userName }) {
+  const transporter = createTransporter();
+  const { EMAIL_USER, EMAIL_FROM_NAME, EMAIL_FROM, EMAIL_REPLY_TO } = getEmailConfig();
+  const from = EMAIL_FROM || EMAIL_USER;
+  const fromName = EMAIL_FROM_NAME || 'CreatorOS';
+  const replyTo = EMAIL_REPLY_TO || from;
+  const escapedUserName = escapeHtml(userName);
+  const subject = 'Verify Your CreatorOS Account';
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.5;">
+      <h2 style="color: #0f172a;">Verify Your Email Address</h2>
+      <p>Hi ${escapedUserName || 'there'},</p>
+      <p>Welcome to CreatorOS! Please verify your email address to activate your account.</p>
+      <p style="text-align:center; margin: 32px 0;">
+        <a href="${verificationLink}" style="display:inline-block; padding:14px 24px; background:#22d3ee; color:#0f172a; text-decoration:none; border-radius:999px; font-weight:700;">Verify Email Address</a>
+      </p>
+      <p style="color:#666; font-size:14px;">This link will expire in 24 hours. If you did not create this account, you can ignore this email.</p>
+      <p style="color:#666; font-size:14px;">If the button does not work, paste this URL into your browser:</p>
+      <p style="color:#2563eb; word-break:break-all;"><a href="${verificationLink}" style="color:#2563eb;">${verificationLink}</a></p>
+      <p>Best regards,<br />CreatorOS Team</p>
+    </div>
+  `;
+
+  const text = `Welcome to CreatorOS! 
+
+Please verify your email address by clicking this link:
+${verificationLink}
+
+This link will expire in 24 hours.
+
+If you did not create this account, you can ignore this email.
+
+Best regards,
+CreatorOS Team`;
+
+  return transporter.sendMail({
+    from: `"${fromName}" <${from}>`,
+    to,
+    replyTo,
+    subject,
+    text,
+    html,
+  });
+}
+
+async function sendPasswordResetEmail({ to, resetLink, userName }) {
+  const transporter = createTransporter();
+  const { EMAIL_USER, EMAIL_FROM_NAME, EMAIL_FROM, EMAIL_REPLY_TO } = getEmailConfig();
+  const from = EMAIL_FROM || EMAIL_USER;
+  const fromName = EMAIL_FROM_NAME || 'CreatorOS';
+  const replyTo = EMAIL_REPLY_TO || from;
+  const escapedUserName = escapeHtml(userName);
+  const subject = 'Reset Your CreatorOS Password';
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.5;">
+      <h2 style="color: #0f172a;">Reset Your Password</h2>
+      <p>Hi ${escapedUserName || 'there'},</p>
+      <p>We received a request to reset your CreatorOS password. Click the button below to set a new password.</p>
+      <p style="text-align:center; margin: 32px 0;">
+        <a href="${resetLink}" style="display:inline-block; padding:14px 24px; background:#22d3ee; color:#0f172a; text-decoration:none; border-radius:999px; font-weight:700;">Reset Password</a>
+      </p>
+      <p style="color:#666; font-size:14px;">This link will expire in 15 minutes. If you did not request a password reset, you can ignore this email.</p>
+      <p style="color:#666; font-size:14px;">If the button does not work, paste this URL into your browser:</p>
+      <p style="color:#2563eb; word-break:break-all;"><a href="${resetLink}" style="color:#2563eb;">${resetLink}</a></p>
+      <p>Best regards,<br />CreatorOS Team</p>
+    </div>
+  `;
+
+  const text = `Hi ${escapedUserName || 'there'},
+
+We received a request to reset your CreatorOS password. Click the link below to set a new password:
+
+${resetLink}
+
+This link will expire in 15 minutes.
+
+If you did not request a password reset, you can ignore this email.
+
+Best regards,
+CreatorOS Team`;
+
+  return transporter.sendMail({
+    from: `"${fromName}" <${from}>`,
+    to,
+    replyTo,
+    subject,
+    text,
+    html,
+  });
+}
+
+async function sendDeletionConfirmationEmail({ to, confirmLink, userName, scheduledDate }) {
+  const transporter = createTransporter();
+  const { EMAIL_USER, EMAIL_FROM_NAME, EMAIL_FROM, EMAIL_REPLY_TO } = getEmailConfig();
+  const from = EMAIL_FROM || EMAIL_USER;
+  const fromName = EMAIL_FROM_NAME || 'CreatorOS';
+  const replyTo = EMAIL_REPLY_TO || from;
+  const subject = 'Confirm Your CreatorOS Account Deletion';
+
+  // Extract token from the confirmLink for use in the confirmation page
+  const tokenMatch = confirmLink.match(/token=([^&]+)/);
+  const token = tokenMatch ? tokenMatch[1] : '';
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.5;">
+      <h2 style="color: #dc2626;">Account Deletion Request</h2>
+      <p>Hi ${userName || 'there'},</p>
+      <p>We received a request to delete your CreatorOS account. Your account is scheduled for permanent deletion on <strong>${scheduledDate}</strong>.</p>
+      <p>To confirm this deletion, please click the button below. If you did not request this deletion, please ignore this email or cancel the deletion request.</p>
+      <p style="text-align:center; margin: 32px 0;">
+        <a href="${confirmLink}" style="display:inline-block; padding:14px 24px; background:#dc2626; color:#ffffff; text-decoration:none; border-radius:999px; font-weight:700;">Confirm Account Deletion</a>
+      </p>
+      <p style="color:#666; font-size:14px;">If you did not request this deletion, you can safely ignore this email. Your account will not be deleted without confirmation.</p>
+      <p style="color:#666; font-size:14px;">If the button does not work, paste this URL into your browser:</p>
+      <p style="color:#2563eb; word-break:break-all;"><a href="${confirmLink}" style="color:#2563eb;">${confirmLink}</a></p>
+      <p>Best regards,<br />CreatorOS Team</p>
+    </div>
+  `;
+
+  const text = `Account Deletion Request
+
+Hi ${userName || 'there'},
+
+We received a request to delete your CreatorOS account. Your account is scheduled for permanent deletion on ${scheduledDate}.
+
+To confirm this deletion, please click this link: ${confirmLink}
+
+If you did not request this deletion, you can safely ignore this email. Your account will not be deleted without confirmation.
+
+Best regards,
+CreatorOS Team`;
+
+  return transporter.sendMail({
+    from: `"${fromName}" <${from}>`,
+    to,
+    replyTo,
+    subject,
+    text,
+    html,
+  });
+}
+
+module.exports = {
+  sendInvitationEmail,
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendDeletionConfirmationEmail,
+  isEmailTransportConfigured,
+  createTransporter,
+};

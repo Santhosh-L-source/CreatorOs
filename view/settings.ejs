@@ -1,0 +1,260 @@
+<%- include('partials/layout/header', { 
+    activeNav: 'settings', 
+    title: 'Settings',
+    bodyClass: 'settings-page density-' + user.preferences.interfaceDensity + ' appearance-' + user.preferences.appearanceMode + (user.preferences.motionEffects ? '' : ' no-motion'),
+    bodyAttributes: "data-user='" + JSON.stringify({ name: user.name, alias: user.alias, bio: user.bio, initials: user.initials, twoFactorEnabled: user.twoFactorEnabled, preferences: user.preferences, passwordAgeDays: user.passwordAgeDays, billing: user.billing, isGuestContributor: isGuestContributor, scheduledDeletionAt: user.scheduledDeletionAt, deletionConfirmed: user.deletionConfirmed }) + "'",
+    layoutClass: 'settings-layout',
+    mainClass: 'workspace-main settings-main',
+    extraHead: '<link rel="stylesheet" href="/css/workspace-shell.css"><link rel="stylesheet" href="/css/settings.css">' 
+}) %>
+
+            <div class="settings-content">
+                <% if (isGuestContributor) { %>
+                    <div class="guest-banner">Contributor accounts can view preferences but cannot change profile or security settings.</div>
+                <% } %>
+
+                <header class="settings-header dashboard-head">
+                    <div>
+                        <h1>Settings</h1>
+                        <p>Manage your workspace identity, security, and billing cycles.</p>
+                    </div>
+                </header>
+
+                <div class="content-layout">
+                <nav class="sub-nav" aria-label="Settings sections">
+                    <a href="#profile" class="sub-nav-item active">Profile Information</a>
+                    <a href="#security" class="sub-nav-item">Security &amp; Access</a>
+                    <a href="#billing" class="sub-nav-item">Billing &amp; Usage</a>
+                    <a href="#global" class="sub-nav-item">Global Preferences</a>
+                </nav>
+
+                <div class="settings-sections">
+                    <section id="profile" class="section-card">
+                        <div class="section-header">
+                            <h2 class="section-title">Profile Information</h2>
+                            <span class="badge-yellow">IDENTITY_MOD</span>
+                        </div>
+                        <form id="profile-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="profile-name">Full Name</label>
+                                    <input type="text" class="form-input" id="profile-name" name="name" value="<%= user.name %>" <%= isGuestContributor ? 'disabled' : '' %>>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="profile-alias">Creator Alias</label>
+                                    <input type="text" class="form-input" id="profile-alias" name="alias" value="<%= user.alias %>" placeholder="@your_alias" <%= isGuestContributor ? 'disabled' : '' %>>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="profile-bio">Bio / Description</label>
+<textarea class="form-textarea" id="profile-bio" name="bio" maxlength="150" <%= isGuestContributor ? 'disabled' : '' %>><%= user.bio %></textarea>
+
+<div class="char-counter">
+    <span id="bio-count">0</span>/150 characters
+</div>                           
+
+                            <div class="divider"></div>
+                            <button type="submit" class="btn-action btn-action-right" id="profile-submit" <%= isGuestContributor ? 'disabled' : '' %>>Update Profile</button>
+                            <div style="clear:both"></div>
+                        </form>
+                    </section>
+
+                    <section id="security" class="section-card">
+                        <div class="section-header">
+                            <h2 class="section-title">Security &amp; Access</h2>
+                            <span class="badge-blue">ENCRYPTION_V3</span>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <h4>Two-Factor Authentication</h4>
+                                <p>Add an extra layer of security to your account.</p>
+                            </div>
+                            <div class="toggle-switch <%= user.twoFactorEnabled ? '' : 'off' %>" id="tfa-toggle" role="switch" aria-checked="<%= user.twoFactorEnabled %>" tabindex="0" <%= isGuestContributor ? 'aria-disabled=true' : '' %>></div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <h4>Password Management</h4>
+                                <p id="pwd-age-text"><% if (user.passwordAgeDays !== null) { %>Last updated <%= user.passwordAgeDays %> day<%= user.passwordAgeDays === 1 ? '' : 's' %> ago<% } else { %>Change your account password.<% } %></p>
+                            </div>
+                            <button type="button" class="btn-secondary" id="change-pwd-btn" <%= isGuestContributor ? 'disabled' : '' %>>Change Key</button>
+                        </div>
+                        <div class="pwd-panel" id="pwd-form">
+                            <div class="form-group" style="margin-bottom:1rem">
+                                <label class="form-label" for="old-pwd">Old Password</label>
+                                <input type="password" id="old-pwd" class="form-input" autocomplete="current-password">
+                            </div>
+                            <div class="form-group" style="margin-bottom:1rem">
+                                <label class="form-label" for="new-pwd">New Password</label>
+                                <input type="password" id="new-pwd" class="form-input" autocomplete="new-password" minlength="8">
+                            </div>
+                            <button type="button" class="btn-action" id="save-pwd-btn">Save Password</button>
+                        </div>
+                        <div class="danger-zone">
+                            <h4 class="danger-title">Danger Zone</h4>
+                            <p class="danger-text">Deleting your account is permanent and cannot be undone.</p>
+                            <button type="button" class="btn-danger" id="deactivate-btn" <%= isGuestContributor ? 'disabled' : '' %>>Deactivate Creator Instance</button>
+                        </div>
+                    </section>
+
+                    <section id="billing">
+                        <div class="billing-grid">
+                            <div class="billing-card active-plan">
+                                <div class="billing-label">ACTIVE PLAN</div>
+                                <div class="plan-name" id="plan-name"><%= user.billing.planName %></div>
+                                <div class="plan-price">$<span id="plan-price"><%= user.billing.priceMonthly %></span><span>/mo</span></div>
+                                <button type="button" class="btn-black" id="manage-subscription-btn">Manage Subscription</button>
+                            </div>
+                            <div class="billing-card">
+                                <div class="billing-label">NEXT INVOICE</div>
+                                <div class="invoice-date" id="next-invoice-date"><%= user.billing.nextInvoiceLabel %></div>
+                                <div class="invoice-est" id="invoice-est">Estimated: <%= user.billing.estimatedTotal %></div>
+                                <div class="card-info">
+                                    <svg width="24" height="16" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="2" width="22" height="12" rx="2"></rect><line x1="1" y1="7" x2="23" y2="7"></line></svg>
+                                    <span id="card-info-text">
+                                        <% if (user.billing.cardBrand && user.billing.cardLast4) { %>
+                                            <%= user.billing.cardBrand %> ending in <%= user.billing.cardLast4 %>
+                                        <% } else { %>
+                                            No payment method saved
+                                        <% } %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="invoices-table" id="invoices-table">
+                            <thead>
+                                <tr>
+                                    <th>DATE</th>
+                                    <th>INVOICE ID</th>
+                                    <th>AMOUNT</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (user.billing.invoices && user.billing.invoices.length > 0) { %>
+                                    <% user.billing.invoices.forEach(function(inv) { %>
+                                        <tr data-invoice-id="<%= inv.invoiceId %>" data-invoice-url="<%= inv.url || inv.receiptUrl || '' %>">
+                                            <td><%= inv.date %></td>
+                                            <td><%= inv.invoiceId %></td>
+                                            <td><%= inv.amount %></td>
+                                            <td><span class="badge-paid"><%= inv.status %></span></td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr class="no-invoices-row">
+                                        <td colspan="4" style="text-align: center; color: var(--color-text-muted, #666); padding: 1.5rem;">No invoices found.</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section id="global" class="section-card">
+                        <div class="section-header">
+                            <h2 class="section-title">Global Preferences</h2>
+                        </div>
+                        <div class="pref-grid">
+                            <div>
+                                <div class="pref-group">
+                                    <div class="pref-label">Appearance Mode</div>
+                                    <div class="radio-group" id="appearance-group">
+                                        <button type="button" class="radio-btn <%= user.preferences.appearanceMode === 'light' ? 'active' : '' %>" data-val="light">Light</button>
+                                        <button type="button" class="radio-btn <%= user.preferences.appearanceMode === 'dark' ? 'active' : '' %>" data-val="dark">Dark</button>
+                                        <button type="button" class="radio-btn <%= user.preferences.appearanceMode === 'system' ? 'active' : '' %>" data-val="system">System</button>
+                                    </div>
+                                </div>
+                                <div class="pref-group">
+                                    <div class="pref-label">Interface Density</div>
+                                    <div class="radio-group" id="density-group">
+                                        <button type="button" class="radio-btn <%= user.preferences.interfaceDensity === 'compact' ? 'active' : '' %>" data-val="compact">Compact</button>
+                                        <button type="button" class="radio-btn <%= user.preferences.interfaceDensity === 'tactile' ? 'active' : '' %>" data-val="tactile">Tactile</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="pref-row">
+                                    <span class="pref-row-label">Motion Effects</span>
+                                    <div class="toggle-switch-small pref-toggle <%= user.preferences.motionEffects ? '' : 'off' %>" data-key="motionEffects" role="switch" aria-checked="<%= user.preferences.motionEffects %>" tabindex="0"></div>
+                                </div>
+                                <div class="pref-row">
+                                    <span class="pref-row-label">Sound Cues</span>
+                                    <div class="toggle-switch-small pref-toggle <%= user.preferences.soundCues ? '' : 'off' %>" data-key="soundCues" role="switch" aria-checked="<%= user.preferences.soundCues %>" tabindex="0"></div>
+                                </div>
+                                <div class="pref-row">
+                                    <span class="pref-row-label">Auto-Save Links</span>
+                                    <div class="toggle-switch-small pref-toggle <%= user.preferences.autoSaveLinks ? '' : 'off' %>" data-key="autoSaveLinks" role="switch" aria-checked="<%= user.preferences.autoSaveLinks %>" tabindex="0"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                </div>
+            </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="modal-overlay" id="billing-modal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-labelledby="billing-modal-title">
+            <h3 id="billing-modal-title">Manage Subscription</h3>
+            <p id="billing-modal-body">Your Pro Individual plan renews automatically each month.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" id="billing-modal-close">Close</button>
+                <a href="mailto:billing@creatoros.app" class="btn-action" style="text-decoration:none;display:inline-flex;align-items:center">Contact Billing</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="invoice-modal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-labelledby="invoice-modal-title">
+            <h3 id="invoice-modal-title">Invoice Details</h3>
+            <p id="invoice-modal-body"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn-action" id="invoice-download-btn">Download PDF</button>
+                <button type="button" class="btn-secondary" id="invoice-modal-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deletion-modal" aria-hidden="true">
+        <div class="modal-card deletion-modal" role="dialog" aria-labelledby="deletion-modal-title">
+            <div class="deletion-modal-header">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <h3 id="deletion-modal-title">Delete Account</h3>
+            </div>
+            <div class="deletion-modal-body">
+                <p class="deletion-warning">This action is <strong>irreversible</strong>. Your account and all associated data will be permanently deleted after a 30-day grace period.</p>
+                <div class="deletion-info-box">
+                    <h4>What will be deleted:</h4>
+                    <ul>
+                        <li>All your links and analytics</li>
+                        <li>Your creator profile and content</li>
+                        <li>Your collaborations and invites</li>
+                        <li>All personal data and preferences</li>
+                    </ul>
+                </div>
+                <div class="deletion-info-box">
+                    <h4>30-Day Grace Period:</h4>
+                    <p>After confirmation, your account will be scheduled for deletion in 30 days. During this period, you can cancel the deletion request by logging into your account.</p>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label" for="deletion-password">Enter your password to confirm</label>
+                    <input type="password" id="deletion-password" class="form-input" autocomplete="current-password" placeholder="Enter your password">
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label" for="deletion-confirm-text">Type <strong>DELETE</strong> to confirm</label>
+                    <input type="text" id="deletion-confirm-text" class="form-input" placeholder="Type DELETE" autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" id="deletion-modal-close">Cancel</button>
+                <button type="button" class="btn-danger" id="confirm-deletion-btn">Delete Account</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/pages/settings.js"></script>
+    <%- include('partials/layout/scripts') %>
+<%- include('partials/layout/footer') %>

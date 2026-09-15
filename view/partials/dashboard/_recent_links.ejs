@@ -1,0 +1,46 @@
+<%#
+  Partial: dashboard/_recent_links.ejs
+  Props (passed via locals):
+    - recentLinks  Array<{ originalUrl, shortUrl, clicks, createdAt }> (currently static demo rows)
+  Replace the static <tr> rows below with a forEach loop once the
+  controller passes real link data.
+%>
+<section class="panel table-panel" id="recent-links">
+
+  <div class="table-head">
+    <h2>Recent Links</h2>
+    <a href="/services/url-shortener">View all links</a>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Original URL</th>
+          <th>Short URL</th>
+          <th>Clicks</th>
+          <th>Created At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (recentLinks && recentLinks.length > 0) { %>
+          <% recentLinks.forEach(link => { %>
+            <tr>
+              <td><%= link.originalUrl %></td>
+              <td class="short-url">creatoros.link/<%= link.shortUrl %></td>
+              <td><%= link.clicks %></td>
+              <td><%= link.date %></td>
+              <td><%- include('./_link_actions') %></td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 2rem;">No links generated yet.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+</section>

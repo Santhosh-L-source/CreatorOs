@@ -1,0 +1,468 @@
+const express = require("express");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const { signup, login, verifyLogin2FA, handleGoogleCallback, loginAsContributor, verifyEmail, resendVerificationEmail, requestPasswordReset, resetPassword } = require("../controller/auth");
+const { signupValidator, loginValidator, contributorLoginValidator, resendVerificationValidator } = require("../middleware/validators");
+const connectDB = require("../connect");
+const { loginLimiter, authLimiter, signupLimiter, emailVerificationLimiter, forgotPasswordLimiter, resetPasswordLimiter } = require("../middleware/rateLimiters");
+const { redirectIfAuthenticated } = require("../middleware/auth");
+const { resolveGoogleOAuthUser } = require("../utils/resolveGoogleOAuthUser");
+
+const router = express.Router();
+
+const googleAuthConfigured = Boolean(
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_CALLBACK_URL
+);
+
+if (googleAuthConfigured) {
+    passport.use(
+        new GoogleStrategy(
+            {
+                clientID: process.env.GOOGLE_CLIENT_ID,
+                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+                callbackURL: process.env.GOOGLE_CALLBACK_URL,
+            },
+            async (accessToken, refreshToken, profile, done) => {
+                try {
+                    await connectDB();
+                    const User = require("../model/user");
+                    const result = await resolveGoogleOAuthUser(profile, User);
+
+                    if (!result.ok) {
+                        return done(null, false, { message: result.message });
+                    }
+
+                    return done(null, result.user);
+                } catch (error) {
+                    return done(error);
+                }
+            }
+        )
+    );
+}
+
+
+/**
+ * @swagger
+ * /signup:
+ *   get:
+ *     summary: GET request for /signup
+ *     description: Renders the user registration (signup) page.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/signup", redirectIfAuthenticated, (req, res) => {
+    res.render("signup", { error: null });
+});
+
+
+/**
+ * @swagger
+ * /login:
+ *   get:
+ *     summary: GET request for /login
+ *     description: Renders the user authentication (login) page.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/login", redirectIfAuthenticated, (req, res) => {
+    const errorMessages = {
+        google_cancelled: "Google sign-in was cancelled.",
+        google_failed: "Google sign-in failed. Please try again.",
+    };
+
+    res.render("login", {
+        error: errorMessages[req.query.error] || req.query.error || null,
+        googleAuthConfigured,
+        verificationUnavailable: req.query.verificationUnavailable === "1" || req.query.verificationUnavailable === "true",
+        unverifiedEmail: req.query.email || null,
+        requires2FA: req.query.step === "2fa",
+    });
+});
+
+
+/**
+ * @swagger
+ * /signup:
+ *   post:
+ *     summary: POST request for /signup
+ *     description: Processes a new user registration.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/signup", signupLimiter, signupValidator, signup);
+
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: POST request for /login
+ *     description: Authenticates a user and establishes a session.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/login", loginLimiter, loginValidator, login);
+router.post("/login/2fa", loginLimiter, verifyLogin2FA);
+
+/**
+ * @swagger
+ * /login/contributor:
+ *   post:
+ *     summary: POST request for /login/contributor
+ *     description: Authenticates a contributor account.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/login/contributor", loginLimiter, contributorLoginValidator, loginAsContributor);
+
+/**
+ * @swagger
+ * /api/auth/contributor-login:
+ *   post:
+ *     summary: POST request for /api/auth/contributor-login
+ *     description: API endpoint to authenticate a contributor account.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/api/auth/contributor-login", loginLimiter, contributorLoginValidator, loginAsContributor);
+
+
+/**
+ * @swagger
+ * /auth/google:
+ *   get:
+ *     summary: GET request for /auth/google
+ *     description: Initiates the Google OAuth2 authentication flow.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/auth/google", (req, res, next) => {
+    if (!googleAuthConfigured) {
+        return res.redirect("/login?error=Google%20sign-in%20is%20not%20configured%20yet.");
+    }
+
+    return passport.authenticate("google", {
+        scope: ["profile", "email"],
+        session: false,
+        prompt: "select_account",
+    })(req, res, next);
+});
+
+
+/**
+ * @swagger
+ * /auth/google/callback:
+ *   get:
+ *     summary: GET request for /auth/google/callback
+ *     description: Handles the callback from the Google OAuth2 flow.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/auth/google/callback", (req, res, next) => {
+    if (req.query.error) {
+        const errorCode = req.query.error === "access_denied" ? "google_cancelled" : "google_failed";
+        return res.redirect(`/login?error=${errorCode}`);
+    }
+
+    return passport.authenticate("google", {
+        failureRedirect: "/login?error=google_failed",
+        session: false,
+    })(req, res, next);
+}, handleGoogleCallback);
+
+
+/**
+ * @swagger
+ * /verify-email:
+ *   get:
+ *     summary: GET request for /verify-email
+ *     description: Renders the email verification page.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/verify-email", emailVerificationLimiter, verifyEmail);
+
+
+/**
+ * @swagger
+ * /resend-verification:
+ *   get:
+ *     summary: GET request for /resend-verification
+ *     description: Renders the page to request a new verification email.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/resend-verification", (req, res) => {
+    res.render("resend-verification", {
+        error: null,
+        success: null,
+        prefilledEmail: req.query.email || null,
+        verificationDeliveryUnavailable: req.query.delivery === "unavailable",
+        backToLoginUrl: req.query.delivery === "unavailable"
+            ? `/login?verificationUnavailable=1&email=${encodeURIComponent(req.query.email || "")}`
+            : "/login",
+    });
+});
+
+
+/**
+ * @swagger
+ * /resend-verification:
+ *   post:
+ *     summary: POST request for /resend-verification
+ *     description: Generates and sends a new email verification token.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/resend-verification", emailVerificationLimiter, resendVerificationValidator, resendVerificationEmail);
+
+
+/**
+ * @swagger
+ * /logout:
+ *   get:
+ *     summary: GET request for /logout
+ *     description: Terminates the user's session and redirects to login.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/logout", async (req, res) => {
+    const token = req.cookies.token;
+    if (token) {
+        try {
+            const jwt = require("jsonwebtoken");
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (decoded.role === 'guest_contributor') {
+                await connectDB();
+                const ContributorSession = require("../model/contributorSession");
+                await ContributorSession.deleteOne({ contributorId: decoded.id });
+            }
+        } catch (e) {
+            // Token may already be invalid, that's fine
+        }
+    }
+    const isProduction = process.env.NODE_ENV === "production";
+    const isSecureEnvironment = isProduction || process.env.COOKIE_SECURE_DEV === "true";
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: isSecureEnvironment,
+        sameSite: "lax",
+        path: "/",
+    });
+    res.redirect("/login");
+});
+
+/**
+ * @swagger
+ * /forgot-password:
+ *   get:
+ *     summary: GET request for /forgot-password
+ *     description: Renders the forgot password page.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ */
+router.get("/forgot-password", (req, res) => {
+    res.render("forgot-password", {
+        error: null,
+        success: null,
+        prefilledEmail: req.query.email || null,
+    });
+});
+
+/**
+ * @swagger
+ * /forgot-password:
+ *   post:
+ *     summary: Request password reset
+ *     description: Generates and sends a password reset token to the user's email.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reset email sent if account exists
+ *       400:
+ *         description: Invalid request
+ */
+router.post("/forgot-password", forgotPasswordLimiter, requestPasswordReset);
+
+/**
+ * @swagger
+ * /reset-password:
+ *   get:
+ *     summary: GET request for /reset-password
+ *     description: Renders the password reset page.
+ *     responses:
+ *       200:
+ *         description: Successful response
+ */
+router.get("/reset-password", async (req, res) => {
+    const token = req.query.token;
+
+    if (!token) {
+        return res.render("reset-password", {
+            token: null,
+            error: "No reset token provided.",
+            formHidden: true,
+        });
+    }
+
+    try {
+        await connectDB();
+        const User = require("../model/user");
+        const PasswordResetToken = require("../model/passwordResetToken");
+
+        let tokenValid = false;
+        const resetTokenDoc = await PasswordResetToken.findOne({
+            token,
+            used: false,
+            expiresAt: { $gt: new Date() },
+        });
+
+        if (resetTokenDoc) {
+            tokenValid = true;
+        } else {
+            const user = await User.findOne({
+                resetPasswordToken: token,
+                resetPasswordExpires: { $gt: Date.now() },
+            });
+            if (user) tokenValid = true;
+        }
+
+        if (!tokenValid) {
+            return res.render("reset-password", {
+                token: null,
+                error: "This reset link is invalid, expired, or has already been used. Please request a new one.",
+                formHidden: true,
+            });
+        }
+
+        res.render("reset-password", { token, error: null, formHidden: false });
+    } catch (err) {
+        res.render("reset-password", {
+            token: null,
+            error: "Something went wrong. Please try again later.",
+            formHidden: true,
+        });
+    }
+});
+
+/**
+ * @swagger
+ * /reset-password:
+ *   post:
+ *     summary: Reset password with token
+ *     description: Validates reset token and updates user password. Token can only be used once.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid, expired, or already used token
+ */
+router.post("/reset-password", resetPasswordLimiter, resetPassword);
+
+module.exports = router;

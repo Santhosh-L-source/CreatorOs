@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- SEO meta tags -->
+    <%- include('./partials/_seo', {
+        title: 'Login',
+        description: 'Sign in to your CreatorOS dashboard and manage your creator business.',
+        canonical: 'https://creatoros.com/login',
+    }) %>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('./partials/_brand_head') %>
+
+    <link href="https://fonts.googleapis.com/css2?family=Petrona:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Azeret+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Basic vars based on screenshot and DESIGN.md */
+            --blue-bg: #7baaf7; 
+            --cream: #fdf4e3; 
+            --white: #FFFFFF;
+            --black: #000000;
+            --teal: #34D399; 
+            --teal-hover: #10B981;
+            
+            --border-width: 3px;
+            --shadow-ink: var(--black);
+            --shadow-sm: 3px 3px 0px 0px var(--shadow-ink);
+            --shadow-md: 4px 4px 0px 0px var(--shadow-ink);
+            --shadow-lg: 6px 6px 0px 0px var(--shadow-ink);
+            --shadow-xl: 8px 8px 0px 0px var(--shadow-ink);
+            
+            --border-base: 2px solid var(--black);
+            --border-thick: 4px solid var(--black);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            color: var(--black);
+            background-color: var(--white); 
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+        }
+
+        .window-frame {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-height: 100vh;
+            background: var(--cream);
+            overflow: auto;
+            position: relative;
+        }
+
+        @media (min-width: 1024px) {
+            .window-frame {
+                flex-direction: row;
+            }
+        }
+
+        /* Typography */
+        .font-display { font-family: 'Petrona', serif; }
+        .font-sans { font-family: 'Source Sans 3', sans-serif; }
+        .font-label { font-family: 'Azeret Mono', monospace; }
+
+        /* Left Panel */
+        .left-panel {
+            flex: 1;
+            background-color: var(--blue-bg);
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-bottom: var(--border-base);
+        }
+        
+        @media (min-width: 1024px) {
+            .left-panel {
+                padding: 4rem;
+                border-bottom: none;
+                border-right: var(--border-base);
+            }
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
+            font-weight: 700;
+            font-size: 1.5rem;
+            text-decoration: none;
+            color: var(--black);
+            margin-bottom: 3rem;
+            font-family: 'Petrona', serif;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-badge-logo {
+            display: block;
+            height: 44px;
+            width: auto;
+        }
+
+        .left-panel h1 {
+            font-size: clamp(3rem, 5vw, 4.5rem);
+            line-height: 1.05;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--black);
+            position: relative;
+            z-index: 10;
+        }
+
+        .highlight-box {
+            display: inline-block;
+            background-color: var(--teal);
+            padding: 0 0.5rem;
+            border: 2px solid var(--black);
+            box-shadow: var(--shadow-md);
+        }
+
+        .left-panel .description {
+            font-size: 1.125rem;
+            line-height: 1.6;
+            color: rgba(0,0,0,0.85);
+            max-width: 85%;
+            font-weight: 500;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Decorative Shapes */
+        .shape-1 {
+            position: absolute;
+            bottom: 25%;
+            right: 15%;
+            width: 80px;
+            height: 80px;
+            background-color: #854d0e; 
+            border: 2px solid var(--black);
+            transform: rotate(-10deg);
+            z-index: 1;
+        }
+
+        .shape-2 {
+            position: absolute;
+            bottom: 15%;
+            left: 5%;
+            width: 60px;
+            height: 60px;
+            background-color: #047857; 
+            border: 2px solid var(--black);
+            transform: rotate(15deg);
+            z-index: 1;
+        }
+
+        .stats-badge {
+            position: absolute;
+            bottom: 2rem;
+            left: 2rem;
+            background: var(--white);
+            border: 2px solid var(--black);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow-md);
+            transform: rotate(-2deg);
+            z-index: 10;
+        }
+
+        .stats-badge img {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--black);
+            border-radius: 0;
+            background: #ccc;
+            object-fit: cover;
+        }
+
+        .stats-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stats-text .top {
+            font-family: 'Azeret Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .stats-text .bottom {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            flex: 1;
+            background-color: var(--cream);
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .social-btn {
+            background-color: var(--white);
+            border: var(--border-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            font-family: 'Source Sans 3', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--black);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.15s ease;
+            margin-bottom: 1rem;
+            width: 100%;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .social-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .social-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .social-icon { width: 18px; height: 18px; }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 2rem 0;
+            font-family: 'Azeret Mono', monospace;
+            font-weight: 600;
+            color: var(--black);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.75rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--black);
+        }
+
+        .divider:not(:empty)::before { margin-right: 1rem; }
+        .divider:not(:empty)::after { margin-left: 1rem; }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        label {
+            font-family: 'Azeret Mono', monospace;
+            font-weight: 600;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--black);
+        }
+
+        .forgot-link {
+            font-family: 'Azeret Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--teal-hover);
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            border: 1px solid var(--black);
+            padding: 1rem;
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s;
+            background: var(--white);
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="text"]:focus {
+            box-shadow: var(--shadow-sm);
+            outline: 2px solid var(--teal);
+            outline-offset: 1px;
+            transform: translate(-1px, -1px);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        input[type="checkbox"] {
+            width: 1.15rem;
+            height: 1.15rem;
+            border: 2px solid var(--black);
+            border-radius: 0;
+            appearance: none;
+            background: var(--white);
+            cursor: pointer;
+            position: relative;
+        }
+        
+        input[type="checkbox"]:checked {
+            background: var(--teal);
+        }
+        
+        input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            color: var(--black);
+            font-weight: bold;
+            font-size: 0.8rem;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .checkbox-label {
+            font-family: 'Source Sans 3', sans-serif;
+            font-weight: 500;
+            font-size: 0.95rem;
+            text-transform: none;
+            letter-spacing: normal;
+            margin-bottom: 0;
+        }
+
+        .primary-btn {
+            width: 100%;
+            background-color: var(--teal);
+            border: 2px solid var(--black);
+            padding: 1.25rem;
+            font-family: 'Azeret Mono', monospace;
+            font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--black);
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.15s ease;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .primary-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 10px 10px 0px 0px var(--black);
+            background-color: var(--teal-hover);
+        }
+
+        .primary-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .switch-link {
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .switch-link a {
+            color: var(--teal-hover);
+            font-weight: 700;
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 4px;
+            margin-left: 0.25rem;
+        }
+        
+        .auth-error {
+            background-color: #fef2f2;
+            border: 2px solid #ef4444;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: #b91c1c;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .auth-unverified {
+            background-color: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: #92400e;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .auth-unverified h3 {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .auth-unverified p {
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .auth-unverified a {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #f59e0b;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .auth-unverified a:hover {
+            background-color: #d97706;
+        }
+
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .password-wrapper input {
+            padding-right: 3.25rem !important;
+        }
+
+        button.password-toggle-btn {
+            position: absolute !important;
+            right: 12px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            cursor: pointer !important;
+            color: var(--black) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 4px !important;
+            margin: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            min-height: auto !important;
+            z-index: 10 !important;
+            transition: transform 0.15s ease !important;
+        }
+
+        button.password-toggle-btn:hover {
+            transform: translateY(-50%) scale(1.15) !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        button.password-toggle-btn:active {
+            transform: translateY(-50%) scale(0.9) !important;
+            box-shadow: none !important;
+        }
+
+        button.password-toggle-btn:focus {
+            outline: 2px solid var(--teal) !important;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="window-frame">
+        <!-- Left Panel -->
+        <section class="left-panel">
+            <a href="/" class="brand-badge">
+                <img class="brand-badge-logo" src="<%= BRAND.logo %>" alt="CreatorOS Logo">
+            </a>
+
+            <h1 class="font-display">Welcome back,<br><span class="highlight-box">Creator.</span></h1>
+            
+            <p class="description">
+                Access your workspace, manage your links, and scale your creative empire from a single interface.
+            </p>
+
+            <div class="shape-1"></div>
+            <div class="shape-2"></div>
+
+            <div class="stats-badge">
+                <img src="/images/avatar-placeholder.jpg" alt="User Avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23ccc\'/></svg>'">
+                <div class="stats-text">
+                    <span class="top">Joined 2,401 creators today</span>
+                    <span class="bottom">Upgrade your workflow now.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel -->
+        <section class="right-panel">
+            <div class="form-container">
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="auth-error" role="alert">
+                        <%= error %>
+                    </div>
+                <% } %>
+
+                <% if (typeof unverifiedEmail !== 'undefined' && unverifiedEmail) { %>
+                    <div class="auth-unverified" role="alert">
+                        <h3>📧 Email Not Verified</h3>
+                        <p>Please verify your email address before logging in.</p>
+                        <% if (typeof verificationUnavailable !== 'undefined' && verificationUnavailable) { %>
+                            <p>Email delivery is temporarily unavailable, so you can continue to log in without verification.</p>
+                        <% } else { %>
+                            <a href="/resend-verification?email=<%= encodeURIComponent(unverifiedEmail) %>">Resend Verification Email</a>
+                        <% } %>
+                    </div>
+                <% } %>
+
+                <a class="social-btn" href="/auth/google">
+                    <svg class="social-icon" viewBox="0 0 48 48" aria-hidden="true">
+                        <path fill="#EA4335" d="M24 9.5c3.5 0 6.5 1.2 8.9 3.5l6.6-6.6C35.5 2.7 30.3.5 24 .5 14.8.5 6.9 5.8 3.1 13.5l7.7 6C12.6 13.6 17.8 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 2.9-2.2 5.4-4.8 7.1l7.4 5.7c4.3-4 7.3-9.9 7.3-16.8z"/>
+                        <path fill="#FBBC05" d="M10.8 28.5c-.5-1.4-.8-2.9-.8-4.5s.3-3.1.8-4.5l-7.7-6C1.5 16.7.6 20.2.6 24s.9 7.3 2.5 10.5l7.7-6z"/>
+                        <path fill="#34A853" d="M24 47.5c6.3 0 11.6-2.1 15.4-5.7L32 36.1c-2.1 1.4-4.7 2.2-8 2.2-6.2 0-11.4-4.1-13.2-9.8l-7.7 6C6.9 42.2 14.8 47.5 24 47.5z"/>
+                    </svg>
+                    Sign in with Google
+                </a>
+
+                <button class="social-btn" type="button" onclick="alert('Instagram login coming soon!')">
+                    <svg class="social-icon" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                    Sign in with Instagram
+                </button>
+
+                <div class="divider">OR EMAIL</div>
+
+                <% const show2FA = typeof requires2FA !== 'undefined' && requires2FA; %>
+                <% if (show2FA) { %>
+                <form action="/login/2fa" method="POST" id="email-login-form">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <p style="margin-bottom: 1.25rem; color: var(--text-muted, #64748b); font-size: 0.95rem;">
+                        Enter the 6-digit code from your authenticator app to finish signing in.
+                    </p>
+                    <div class="form-group">
+                        <div class="label-row">
+                            <label for="login-otp">Authenticator code</label>
+                        </div>
+                        <input id="login-otp" type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="123456" required>
+                    </div>
+                    <button type="submit" class="primary-btn" data-loading-text="Verifying...">
+                        VERIFY &amp; CONTINUE &rarr;
+                    </button>
+                </form>
+                <p class="switch-link">
+                    <a href="/login">Back to sign in</a>
+                </p>
+                <% } else { %>
+                <form action="/login" method="POST" id="email-login-form">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <% if (typeof verificationUnavailable !== 'undefined' && verificationUnavailable) { %>
+                        <input type="hidden" name="allowUnverifiedLogin" value="1">
+                    <% } %>
+                    <div class="form-group">
+                        <div class="label-row">
+                            <label for="login-email">Email Address</label>
+                        </div>
+                        <input id="login-email" type="email" name="email" placeholder="creator@studio.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="label-row">
+                            <label for="login-password">Password</label>
+                            <a href="/forgot-password" class="forgot-link">FORGOT?</a>
+                        </div>
+                        <div class="password-wrapper">
+                            <input id="login-password" type="password" name="password" placeholder="••••••••" required>
+                            <button type="button" id="toggle-password" class="password-toggle-btn" aria-label="Show password">
+                                <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="remember-me" name="remember">
+                        <label for="remember-me" class="checkbox-label">Remember this device</label>
+                    </div>
+
+                    <button type="submit" class="primary-btn" data-loading-text="Logging in...">
+                        SIGN IN &rarr;
+                    </button>
+                </form>
+                <% } %>
+
+                <form action="/login/contributor" method="POST" id="contributor-login-form" style="margin-bottom: 2.5rem;">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="social-btn" style="box-shadow: var(--shadow-sm); justify-content: center;" data-loading-text="Continuing...">
+                        Continue as Contributor
+                    </button>
+                </form>
+
+                <p class="switch-link">
+                    Don't have an account? <a href="/signup">Create your OS account</a>
+                </p>
+            </div>
+        </section>
+    </div>
+    <script src="/js/pages/login.js"></script>
+<%- include('./partials/layout/back-to-top') %>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<%- include('partials/layout/header', {
+    activeNav: 'dashboard',
+    title: 'Dashboard',
+    
+    
+    extraHead: '<link rel="stylesheet" href="/css/dashboard.css">'
+}) %>
+
+            <section class="content">
+                <!-- Dashboard Head -->
+                <div class="dashboard-head">
+                    <div>
+                        <h1>Dashboard</h1>
+                        <p>Welcome back, <%= user.name %>.</p>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid" id="analytics">
+                    <article class="stat-card-retro">
+                        <span class="card-id">STAT_01</span>
+                        <span class="label">Total Links</span>
+                        <span class="value"><%= dashboardData.stats.totalLinks || 32 %></span>
+                        <span class="subtext"><span class="trend">+12%</span> from last month</span>
+                    </article>
+                    <article class="stat-card-retro accent-blue">
+                        <span class="card-id">STAT_02</span>
+                        <span class="label">Total Clicks</span>
+                        <span class="value"><%= dashboardData.stats.totalClicks || 1256 %></span>
+                        <span class="subtext"><span class="trend">+18%</span> from last month</span>
+                    </article>
+                    <article class="stat-card-retro">
+                        <span class="card-id">STAT_03</span>
+                        <span class="label">Top Performing</span>
+                        <span class="value"><%= dashboardData.stats.topPerforming || 423 %></span>
+                        <span class="subtext">Clicks accumulated</span>
+                    </article>
+                    <article class="stat-card-retro">
+                        <span class="card-id">STAT_04</span>
+                        <span class="label">Joined On</span>
+                        <span class="value" style="font-size:2.5rem; margin-top:1rem;"><%= dashboardData.stats.joinedOn || '24 May' %></span>
+                        <span class="subtext">Active Creator</span>
+                    </article>
+                </div>
+
+                <!-- Invite Status -->
+                <section class="panel-retro">
+                    <div class="panel-retro-title-row">
+                        <h2>Invite Status</h2>
+                        <span class="badge-retro">Team invites</span>
+                    </div>
+                    <div class="status-grid-retro">
+                        <div class="status-card-retro pending">
+                            <h3>Pending</h3>
+                            <p><%= inviteSummary ? inviteSummary.pending : 0 %></p>
+                        </div>
+                        <div class="status-card-retro accepted">
+                            <h3>Accepted</h3>
+                            <p><%= inviteSummary ? inviteSummary.accepted : 0 %></p>
+                        </div>
+                        <div class="status-card-retro expired">
+                            <h3>Expired</h3>
+                            <p><%= inviteSummary ? inviteSummary.expired : 0 %></p>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="analytics-grid">
+                    <!-- Analytics Graph -->
+                    <section class="panel-retro">
+                        <div class="panel-retro-title-row">
+                            <h2>Clicks Overview</h2>
+                            <select class="badge-retro" style="cursor:pointer; border:2px solid var(--black); background:var(--white); padding:0.25rem; font-family:'Azeret Mono';">
+                                <option>Last 7 Days</option>
+                                <option>Last 30 Days</option>
+                            </select>
+                        </div>
+                        <div class="chart-wrap" style="height:280px; position:relative;">
+                            <canvas id="clicksChart"></canvas>
+                        </div>
+                    </section>
+
+                    <!-- Accept Invite -->
+                    <div style="display:flex; flex-direction:column; gap:2rem;">
+                        <section class="panel-retro bg-blue">
+                            <div class="panel-retro-title-row">
+                                <h2>Accept Invite</h2>
+                                <span class="badge-retro">Team</span>
+                            </div>
+                            <p style="margin-bottom:1rem;">Paste your token below.</p>
+                            <% if (typeof inviteAcceptMessage !== 'undefined' && inviteAcceptMessage) { %>
+                                <div style="background:var(--success-500); padding:1rem; border:2px solid var(--black); font-weight:bold; margin-bottom:1rem;"><%= inviteAcceptMessage %></div>
+                            <% } %>
+                            <% if (typeof inviteAcceptError !== 'undefined' && inviteAcceptError) { %>
+                                <div style="background:var(--danger-500); color:var(--white); padding:1rem; border:2px solid var(--black); font-weight:bold; margin-bottom:1rem;"><%= inviteAcceptError %></div>
+                            <% } %>
+                            <form class="invite-form" action="/dashboard/accept-invite" method="POST">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <input type="text" name="inviteToken" placeholder="Invite token" required autocomplete="off" />
+                                <button type="submit">Accept</button>
+                            </form>
+                        </section>
+
+                        <section class="panel-retro bg-yellow">
+                            <div class="panel-retro-title-row">
+                                <h2>Top Referrers</h2>
+                            </div>
+                            <div class="chart-wrap" style="height:200px; position:relative;">
+                                <canvas id="referrersChart"></canvas>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Recent Links Table -->
+                <section class="panel-retro" id="recent-links">
+                    <div class="panel-retro-title-row">
+                        <h2>Recent Links</h2>
+                        <a href="/services/url-shortener" class="badge-retro" style="text-decoration:none; color:var(--black);">View all links</a>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="recent-links-table">
+                            <thead>
+                                <tr>
+                                    <th>Original URL</th>
+                                    <th>Short URL</th>
+                                    <th>Clicks</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (dashboardData.recentLinks && dashboardData.recentLinks.length > 0) { %>
+                                    <% dashboardData.recentLinks.forEach(link => { %>
+                                        <tr>
+                                            <td><%= link.originalUrl %></td>
+                                            <td style="font-weight:bold;">creatoros.link/<%= link.shortUrl %></td>
+                                            <td style="font-family:'Azeret Mono'; font-weight:bold;"><%= link.clicks %></td>
+                                            <td><span class="qr-badge">Ready</span></td>
+                                            <td><%= link.date %></td>
+                                            <td>
+                                                <div class="row-actions">
+                                                    <a class="row-action" href="/services/url-shortener"><svg viewBox="0 0 24 24"><path d="M4 19V5M9 19v-6M14 19V9M19 19V3"></path></svg></a>
+                                                    <a class="row-action" href="/services/url-shortener"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td>https://example.com/awesome-video</td>
+                                        <td style="font-weight:bold;">creatoros.link/abc123</td>
+                                        <td style="font-family:'Azeret Mono'; font-weight:bold;">342</td>
+                                        <td><span class="qr-badge">Ready</span></td>
+                                        <td>24 May 2025</td>
+                                        <td>
+                                            <div class="row-actions">
+                                                <a class="row-action" href="/services/url-shortener"><svg viewBox="0 0 24 24"><path d="M4 19V5M9 19v-6M14 19V9M19 19V3"></path></svg></a>
+                                                <a class="row-action" href="/services/url-shortener"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </section>
+        
+
+
+    <!-- ── QR Modal ──────────────────────────────────────────────────────────── -->
+    <div class="qr-modal-wrap" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+        <div class="qr-backdrop" id="qrBackdrop"></div>
+        <div class="qr-modal">
+            <div class="qr-modal-head">
+                <div>
+                    <h3 id="qrModalTitle">QR Code</h3>
+                    <p id="qrModalUrl"></p>
+                </div>
+                <button type="button" class="qr-close" id="qrClose" aria-label="Close QR modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- QR preview -->
+            <div class="qr-preview" id="qrPreview">
+                <div class="qr-preview-placeholder" id="qrPlaceholder">
+                    <div class="qr-spinner"></div>
+                    <span>Generating QR…</span>
+                </div>
+                <!-- SVG from server is injected here as <img> -->
+            </div>
+
+            <!-- Color pickers -->
+            <div class="qr-colors">
+                <div class="qr-color-field">
+                    <label for="qrFg">Foreground</label>
+                    <div class="qr-color-row">
+                        <input type="color" id="qrFgPicker" value="#000000" title="Foreground color">
+                        <input type="text"  id="qrFg" value="#000000" maxlength="7" placeholder="#000000">
+                    </div>
+                </div>
+                <div class="qr-color-field">
+                    <label for="qrBg">Background</label>
+                    <div class="qr-color-row">
+                        <input type="color" id="qrBgPicker" value="#ffffff" title="Background color">
+                        <input type="text"  id="qrBg" value="#ffffff" maxlength="7" placeholder="#ffffff">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="qr-actions">
+                <a class="qr-btn qr-btn-primary" id="qrDownload" href="#" download>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download PNG
+                </a>
+                <button type="button" class="qr-btn qr-btn-secondary" id="qrApplyColors">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                    </svg>
+                    Apply Colors
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/pages/dashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script nonce="<%= nonce %>">
+        document.addEventListener('DOMContentLoaded', () => {
+            // Charts initialization with neo-brutalist styling
+            const ctxClicks = document.getElementById('clicksChart');
+            const clicksLabels = JSON.parse('<%- JSON.stringify(dashboardData.charts.clicksOverview.labels) %>');
+            const clicksData = JSON.parse('<%- JSON.stringify(dashboardData.charts.clicksOverview.data) %>');
+            
+            if (ctxClicks) {
+                new Chart(ctxClicks, {
+                    type: 'line',
+                    data: {
+                        labels: clicksLabels,
+                        datasets: [{
+                            label: 'Clicks',
+                            data: clicksData,
+                            borderColor: '#000000',
+                            backgroundColor: '#4338CA',
+                            borderWidth: 4,
+                            pointBackgroundColor: '#F59E0B',
+                            pointBorderColor: '#000000',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            tension: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { grid: { color: '#000000', lineWidth: 1 }, border: { color: '#000' } },
+                            x: { grid: { display: false }, border: { color: '#000' } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            const ctxRef = document.getElementById('referrersChart');
+            const refLabels = JSON.parse('<%- JSON.stringify(dashboardData.charts.topReferrers.labels) %>');
+            const refData = JSON.parse('<%- JSON.stringify(dashboardData.charts.topReferrers.data) %>');
+            
+            if (ctxRef) {
+                new Chart(ctxRef, {
+                    type: 'doughnut',
+                    data: {
+                        labels: refLabels,
+                        datasets: [{
+                            data: refData,
+                            backgroundColor: ['#4338CA', '#F59E0B', '#10B981'],
+                            borderColor: '#000000',
+                            borderWidth: 2,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { color: '#000000', font: { family: 'Azeret Mono', weight: 'bold' } }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    
+
+
+<%- include('partials/layout/footer') %>

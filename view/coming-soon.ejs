@@ -1,0 +1,16 @@
+<%- include('partials/layout/header', {
+    activeNav: typeof service !== 'undefined' ? service.key : '',
+    title: typeof service !== 'undefined' ? service.name + ' - Coming Soon' : 'Coming Soon',
+    extraHead: '<link rel="stylesheet" href="/css/coming-soon.css">'
+}) %>
+
+<div class="coming-soon-wrap">
+    <div class="card">
+        <span class="badge">COMING SOON</span>
+        <h1><%= service.name %></h1>
+        <p><%= service.description %></p>
+        <a href="/">Back to service hub</a>
+    </div>
+</div>
+
+<%- include('partials/layout/footer') %>

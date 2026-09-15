@@ -1,0 +1,65 @@
+<%# Partial: dashboard/_scripts.ejs — client-side behaviour, no logic changes %>
+<script nonce="<%= nonce %>">
+  /* ── Sidebar collapse ── */
+  const dashboardLayout = document.getElementById('dashboardLayout');
+  const sidebarToggle   = document.getElementById('sidebarToggle');
+
+  if (localStorage.getItem('creatorosSidebarCollapsed') === 'true') {
+    dashboardLayout.classList.add('sidebar-collapsed');
+    sidebarToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  sidebarToggle.addEventListener('click', () => {
+    const isCollapsed = dashboardLayout.classList.toggle('sidebar-collapsed');
+    sidebarToggle.setAttribute('aria-expanded', String(!isCollapsed));
+    localStorage.setItem('creatorosSidebarCollapsed', String(isCollapsed));
+  });
+
+  /* ── Light / dark theme ── */
+  const toggleBtn = document.getElementById('theme-toggle');
+
+  toggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    toggleBtn.innerText = isLight ? '🌙' : '☀️';
+  });
+
+  window.addEventListener('load', () => {
+    if (localStorage.getItem('theme') === 'light') {
+      document.body.classList.add('light-mode');
+      toggleBtn.innerText = '🌙';
+    } else {
+      toggleBtn.innerText = '☀️';
+    }
+  });
+  document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById('scrollToTopBtn');
+  if (!btn) return;
+
+  // 1. Global Interception to watch scrolls inside dashboardLayout panels
+  window.addEventListener('scroll', (e) => {
+    const scrollPos = e.target.scrollTop || window.scrollY || 0;
+    if (scrollPos > 300) {
+      btn.classList.add('show');
+    } else {
+      btn.classList.remove('show');
+    }
+  }, true); // 'true' enables event capturing to catch nested container scrolls
+
+  // 2. Global Execution to smooth scroll the wrapper components
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    const layouts = [
+      document.getElementById('dashboardLayout'),
+      document.querySelector('.dashboard-layout'),
+      document.querySelector('main')
+    ];
+    
+    layouts.forEach(container => {
+      if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+});
+</script>

@@ -1,0 +1,138 @@
+<script nonce="<%= nonce %>">
+    document.addEventListener('DOMContentLoaded', () => {
+        // ── Global Preferences: Appearance / Theme Logic ──
+        const themeBtn = document.getElementById('theme-toggle');
+        const root = document.documentElement;
+        const iconLight = themeBtn ? themeBtn.querySelector('.icon-light') : null;
+        const iconDark = themeBtn ? themeBtn.querySelector('.icon-dark') : null;
+        
+        function applyTheme(isDark) {
+            if (isDark) {
+                root.setAttribute('data-theme', 'dark');
+                if (iconLight) iconLight.style.display = 'none';
+                if (iconDark) iconDark.style.display = 'block';
+            } else {
+                root.removeAttribute('data-theme');
+                if (iconLight) iconLight.style.display = 'block';
+                if (iconDark) iconDark.style.display = 'none';
+            }
+        }
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        let mediaListener = null;
+
+        function handleSystemThemeChange(e) {
+            if (localStorage.getItem('creatorosAppearance') === 'system') {
+                applyTheme(e.matches);
+                window.dispatchEvent(new Event('themeChanged'));
+            }
+        }
+
+        function initAppearance() {
+            const appearance = localStorage.getItem('creatorosAppearance');
+            const storedTheme = localStorage.getItem('theme');
+
+            if (appearance === 'system') {
+                applyTheme(mediaQuery.matches);
+                if (!mediaListener) {
+                    mediaListener = handleSystemThemeChange;
+                    if (mediaQuery.addEventListener) {
+                        mediaQuery.addEventListener('change', mediaListener);
+                    } else if (mediaQuery.addListener) {
+                        mediaQuery.addListener(mediaListener);
+                    }
+                }
+            } else {
+                if (mediaListener) {
+                    if (mediaQuery.removeEventListener) {
+                        mediaQuery.removeEventListener('change', mediaListener);
+                    } else if (mediaQuery.removeListener) {
+                        mediaQuery.removeListener('change', mediaListener);
+                    }
+                    mediaListener = null;
+                }
+                const isDark = (appearance === 'dark') || (storedTheme === 'dark');
+                applyTheme(isDark);
+            }
+        }
+
+        initAppearance();
+
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                const isDark = root.getAttribute('data-theme') === 'dark';
+                const newDark = !isDark;
+                applyTheme(newDark);
+                const nextTheme = newDark ? 'dark' : 'light';
+                localStorage.setItem('theme', nextTheme);
+                localStorage.setItem('creatorosAppearance', nextTheme);
+                initAppearance();
+                window.dispatchEvent(new Event('themeChanged'));
+            });
+        }
+
+        // ── Global Preferences: Interface Density & Motion ──
+        function applyGlobalPreferences() {
+            const density = localStorage.getItem('creatorosDensity');
+            if (density) {
+                document.body.classList.remove('density-compact', 'density-tactile');
+                document.body.classList.add(`density-${density}`);
+            }
+
+            const motion = localStorage.getItem('creatorosMotion');
+            if (motion === 'false') {
+                document.body.classList.add('no-motion');
+            } else if (motion === 'true') {
+                document.body.classList.remove('no-motion');
+            }
+        }
+
+        applyGlobalPreferences();
+
+        // ── Sidebar Mobile Toggle ──
+        const sidebarBtn = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const layout = document.getElementById('dashboardLayout') || document.querySelector('.dashboard-layout');
+        
+        if (layout) {
+            // Hide by default on screens < 768px
+            if (window.innerWidth < 768 || localStorage.getItem('creatorosSidebarCollapsed') === 'true') {
+                layout.classList.add('sidebar-collapsed');
+                if (sidebarBtn) sidebarBtn.setAttribute('aria-expanded', 'false');
+            }
+
+            if (sidebarBtn) {
+                sidebarBtn.addEventListener('click', () => {
+                    const isCollapsed = layout.classList.toggle('sidebar-collapsed');
+                    sidebarBtn.setAttribute('aria-expanded', String(!isCollapsed));
+                    localStorage.setItem('creatorosSidebarCollapsed', String(isCollapsed));
+                });
+            }
+        }
+
+        // ── Analytics: do not display fabricated geographic metrics ──
+        if (window.location.pathname.includes('/analytics')) {
+            const reachPanel = document.querySelector('.reach-panel');
+            if (reachPanel) {
+                const countryRows = reachPanel.querySelectorAll('.country-row');
+                countryRows.forEach((row) => row.remove());
+
+                const message = document.createElement('div');
+                message.className = 'country-row';
+                message.innerHTML = '<span class="country-name">No geographic data available</span>';
+                const reachLeft = reachPanel.querySelector('.reach-left');
+                if (reachLeft) reachLeft.appendChild(message);
+            }
+
+            const mapElement = document.getElementById('map');
+            if (mapElement) {
+                mapElement.querySelectorAll('.leaflet-overlay-pane path.leaflet-interactive').forEach((path) => {
+                    path.remove();
+                });
+            }
+        }
+    });
+
+</script>
+
+<script src="/js/global-search.js" defer></script>
